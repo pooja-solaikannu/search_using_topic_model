@@ -9,36 +9,32 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 
 import data
-
-filepath = "data/flowers_desc_dataset.xlsx"
-op_filename = "data/doc_topic_dist.csv"
-op_model = "data/models/lda.pkl"
-cv_model = "data/models/count_vec.pkl"
+from config.config import *
 
 
 def train(trimmed_data):
 
     stops = set(stopwords.words('english'))
 
-    count_vec = CountVectorizer(stop_words=stops)
-    X_input = count_vec.fit_transform(trimmed_data["cleaned_text"])
+    vectorizer = CountVectorizer(stop_words=stops)
+    X_input = vectorizer.fit_transform(trimmed_data["cleaned_text"])
 
-    lda = LatentDirichletAllocation(n_components=15, random_state=0)
-    lda.fit(X_input)
+    model = LatentDirichletAllocation(n_components=7, random_state=0)
+    model.fit(X_input)
 
-    doc_topic_dist = pd.DataFrame(lda.transform(X_input))
+    doc_topic_dist = pd.DataFrame(model.transform(X_input))
 
-    return count_vec, lda, doc_topic_dist
+    return vectorizer, lda, doc_topic_dist
 
 
-def save_artifacts(count_vec, model, topic_dist):
+def save_artifacts(vectorizer, model, doc_topic_dist):
 
-    topic_dist.to_csv(op_filename, index=False)
-    pkl.dump(model, open(op_model, "wb"))
-    pkl.dump(count_vec, open(cv_model, "wb"))
+    doc_topic_dist.to_csv(DOC_TOPIC_DIST, index=False)
+    pkl.dump(model, open(LDA_MODEL, "wb"))
+    pkl.dump(vectorizer, open(VECTORIZER_MODEL, "wb"))
 
 
 if __name__ == "__main__":
-    trimmed_data = data.data_cleaning(filepath=filepath)
-    count_vec, model, dataset_topic_dist = train(trimmed_data)
-    save_artifacts(count_vec, model, dataset_topic_dist)
+    trimmed_data = data.data_cleaning(filepath=TRAIN_DATA)
+    vectorizer, model, doc_topic_dist = train(trimmed_data)
+    save_artifacts(vectorizer, model, doc_topic_dist)
